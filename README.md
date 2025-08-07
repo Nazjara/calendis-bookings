@@ -1,231 +1,149 @@
-# Calendis Bookings Application
+# Calendis Bookings
 
 A Spring Boot application for making sport bookings through the Calendis API.
 
-## Features
+## Purpose
 
-- Login to Calendis API
-- Get available slots for a specific service, location, and date
-- Book appointments in a single step (create, extract ID, and confirm)
-- Scheduled automatic appointment booking (configurable)
+Calendis Bookings is designed to simplify the process of booking sports facilities through the Calendis platform. It provides both a REST API for manual bookings and an automated scheduler for recurring bookings. Key features include:
 
-## Technologies Used
+- Authentication with Calendis API
+- Checking available slots for sports facilities
+- Booking appointments in a single step
+- Automated scheduling of bookings at configured times
 
-- Java 21
-- Spring Boot 3.5.4
-- Spring WebFlux (WebClient)
-- Jsoup for HTML parsing
-- Lombok for reducing boilerplate code
-- JUnit and Mockito for testing
+## Building and Running
 
-## API Endpoints
+### Prerequisites
 
-### Authentication
+- Java 21 or higher
+- Maven 3.6 or higher
 
-```
-POST /api/auth/login
+### Build
+
+```bash
+mvn clean install
 ```
 
-Request body:
-```json
-{
-  "email": "your-email@example.com",
-  "password": "your-password",
-  "remember": true
-}
+### Run
+
+```bash
+mvn spring-boot:run
 ```
 
-Response:
-```json
-{
-  "clientSession": "session-token"
-}
+Or with a specific profile:
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-### Appointments
+### Run Tests
 
-#### Get Available Slots
-
+```bash
+mvn test
 ```
-GET /api/appointments/available-slots?service_id=37695&location_id=4609&date=1754678880&day_only=1
-```
-
-Response:
-```json
-{
-  "message": "success",
-  "success": 1,
-  "available_slots": [
-    {
-      "is_available": 1,
-      "staff_id": "20359",
-      "time": 1754222400,
-      "group_id": null
-    }
-  ],
-  "service_details": null
-}
-```
-
-#### Create Appointment
-
-```
-POST /api/appointments
-```
-
-Request body:
-```json
-{
-  "appointments": [
-    {
-      "dateUnix": 1754730000,
-      "dateUtcUnix": 1754719200,
-      "location_id": 4609,
-      "service_id": 37694,
-      "staff_id": "20362",
-      "startTime": "12:00",
-      "originalSlot": 0
-    }
-  ],
-  "group_id": null
-}
-```
-
-Response:
-```json
-{
-  "id": 5656048,
-  "dateUnix": 1754730000
-}
-```
-
-#### Book Appointment
-
-Books an appointment by creating it and then confirming it in a single operation.
-
-```
-POST /api/appointments/book
-```
-
-Request body:
-```json
-{
-  "appointments": [
-    {
-      "dateUnix": 1754730000,
-      "dateUtcUnix": 1754719200,
-      "location_id": 4609,
-      "service_id": 37694,
-      "staff_id": "20362",
-      "startTime": "12:00",
-      "originalSlot": 0
-    }
-  ],
-  "group_id": null
-}
-```
-
-Response:
-```json
-{
-  "id": 5656048,
-  "dateUnix": 1754730000
-}
-```
-
-## Running the Example
-
-The application includes an example class that demonstrates how to use the API. To run the example:
-
-```
-mvn spring-boot:run -Dspring-boot.run.profiles=example
-```
-
-Make sure to update the credentials in the `CalendisBookingExample` class before running the example.
 
 ## Configuration
 
-The application can be configured through the `application.properties` file:
+The application can be configured using environment variables. Below is a list of available environment variables organized by category.
 
-```properties
-# Server configuration
-server.port=8080
+### Setting Environment Variables
 
-# Logging configuration
-logging.level.root=INFO
-logging.level.com.nazjara=DEBUG
-logging.level.org.springframework.web=INFO
-logging.level.org.springframework.web.reactive.function.client.ExchangeFunctions=DEBUG
+You can set environment variables in different ways:
 
-# Calendis API configuration
-calendis.api.base-url=https://www.calendis.ro
+```bash
+# When running with Maven
+export EMAIL_PRIMARY=your.email@example.com
+mvn spring-boot:run
 
-# Scheduler configuration
-calendis.scheduler.cron-expression=0 0 8 * * ?
-calendis.scheduler.enabled=false
-calendis.scheduler.email=your-email@example.com
-calendis.scheduler.password=your-password
-calendis.scheduler.remember=true
-calendis.scheduler.service-id=37695
-calendis.scheduler.location-id=4609
-calendis.scheduler.staff-id=20359
-# calendis.scheduler.date=1754678880
-calendis.scheduler.day-only=1
-# calendis.scheduler.start-time=12:00
+# Or in a single command
+EMAIL_PRIMARY=your.email@example.com mvn spring-boot:run
+
+# When running with Docker
+docker run -e EMAIL_PRIMARY=your.email@example.com calendis-bookings
 ```
 
-## Scheduled Appointment Booking
+### API Configuration
 
-The application includes a scheduler that can automatically book appointments at configured times. This feature is useful for recurring bookings or when you want to ensure you get a slot as soon as they become available.
+| Environment Variable | Description | Default Value |
+|----------------------|-------------|---------------|
+| `CALENDIS_API_BASE_URL` | Base URL for the Calendis API | `https://www.calendis.ro` |
 
-### How the Scheduler Works
+### User Credentials
 
-1. The scheduler runs at the configured time (specified by the cron expression)
-2. It logs in to the Calendis API using the configured credentials
-3. It retrieves available slots based on the configured parameters
-4. It selects an appropriate slot based on preferences (staff ID, start time)
-5. It books the appointment using the selected slot
+These variables are required for authentication with the Calendis API:
 
-### Scheduler Configuration
+| Environment Variable | Description | Default Value |
+|----------------------|-------------|---------------|
+| `EMAIL_PRIMARY` | Primary user email for authentication | (Required) |
+| `EMAIL_SECONDARY` | Secondary user email for authentication | (Required) |
+| `PASSWORD_PRIMARY` | Primary user password | (Required) |
+| `PASSWORD_SECONDARY` | Secondary user password | (Required) |
 
-The scheduler can be configured through the `application.properties` file:
+### Location Configuration
 
-| Property | Description | Default |
-|----------|-------------|---------|
-| `calendis.scheduler.cron-expression` | Cron expression for when the scheduler runs | `0 0 8 * * ?` (8:00 AM daily) |
-| `calendis.scheduler.enabled` | Whether the scheduler is enabled | `false` |
-| `calendis.scheduler.email` | Email for authentication | (required) |
-| `calendis.scheduler.password` | Password for authentication | (required) |
-| `calendis.scheduler.remember` | Whether to remember the login session | `true` |
-| `calendis.scheduler.service-id` | Service ID for the appointment | (required) |
-| `calendis.scheduler.location-id` | Location ID for the appointment | (required) |
-| `calendis.scheduler.staff-id` | Staff ID for the appointment (optional) | (first available) |
-| `calendis.scheduler.date` | Date for the appointment in Unix timestamp (optional) | (current date) |
-| `calendis.scheduler.day-only` | Whether to return slots for the entire day | `1` |
-| `calendis.scheduler.start-time` | Preferred start time in HH:mm format (optional) | (first available) |
+| Environment Variable | Description | Default Value |
+|----------------------|-------------|---------------|
+| `LA_TERENURI_LOCATION_ID` | Location ID for La Terenuri facility | `4609` |
+| `GHEORGHENI_LOCATION_ID` | Location ID for Gheorgheni facility | `165111` |
 
-### Enabling the Scheduler
+### Sport Service Configuration
 
-To enable the scheduler, set `calendis.scheduler.enabled=true` in your `application.properties` file and provide the required configuration values.
+#### La Terenuri
+
+| Environment Variable | Description | Default Value |
+|----------------------|-------------|---------------|
+| `LA_TERENURI_TENIS_SERVICE_ID` | Service ID for tennis at La Terenuri | `37695` |
+| `LA_TERENURI_SQUASH_SERVICE_ID` | Service ID for squash at La Terenuri | `37694` |
+| `LA_TERENURI_TENIS_TABLE_SERVICE_ID` | Service ID for table tennis at La Terenuri | `37697` |
+| `LA_TERENURI_TENIS_STUFF_ID` | Staff ID for tennis at La Terenuri (0 for any) | `0` |
+| `LA_TERENURI_SQUASH_STUFF_ID` | Staff ID for squash at La Terenuri | `20359` |
+| `LA_TERENURI_TENIS_TABLE_STUFF_ID` | Staff ID for table tennis at La Terenuri (0 for any) | `0` |
+
+#### Gheorgheni
+
+| Environment Variable | Description | Default Value |
+|----------------------|-------------|---------------|
+| `GHEORGHENI_TENIS_SERVICE_ID` | Service ID for tennis at Gheorgheni | `8029` |
+| `GHEORGHENI_TENIS_TABLE_SERVICE_ID` | Service ID for table tennis at Gheorgheni | `8041` |
+| `GHEORGHENI_TENIS_STUFF_ID` | Staff ID for tennis at Gheorgheni (0 for any) | `0` |
+| `GHEORGHENI_TENIS_TABLE_STUFF_ID` | Staff ID for table tennis at Gheorgheni (0 for any) | `0` |
+
+### Scheduling Configuration
+
+The scheduler can be configured to automatically book appointments at specific times.
+
+#### La Terenuri Tennis
+
+| Environment Variable | Description | Default Value |
+|----------------------|-------------|---------------|
+| `LA_TERENURI_TENIS_PRIMARY_CRON_EXPRESSION` | When to run the primary scheduler (cron format) | `0 55 9 * * SAT` |
+| `LA_TERENURI_TENIS_PRIMARY_ENABLED` | Whether primary schedule is enabled | `true` |
+| `LA_TERENURI_TENIS_PRIMARY_APPOINTMENT_TIME` | Desired appointment time for primary schedule | `10:00` |
+| `LA_TERENURI_TENIS_SECONDARY_CRON_EXPRESSION` | When to run the secondary scheduler | `0 55 10 * * SAT` |
+| `LA_TERENURI_TENIS_SECONDARY_ENABLED` | Whether secondary schedule is enabled | `true` |
+| `LA_TERENURI_TENIS_SECONDARY_APPOINTMENT_TIME` | Desired appointment time for secondary schedule | `11:00` |
+
+#### La Terenuri Squash
+
+| Environment Variable | Description | Default Value |
+|----------------------|-------------|---------------|
+| `LA_TERENURI_SQUASH_PRIMARY_CRON_EXPRESSION` | When to run the primary scheduler | `0 55 9 * * TUE` |
+| `LA_TERENURI_SQUASH_PRIMARY_ENABLED` | Whether primary schedule is enabled | `true` |
+| `LA_TERENURI_SQUASH_PRIMARY_APPOINTMENT_TIME` | Desired appointment time for primary schedule | `10:00` |
+| `LA_TERENURI_SQUASH_SECONDARY_CRON_EXPRESSION` | When to run the secondary scheduler | `0 55 9 * * THU` |
+| `LA_TERENURI_SQUASH_SECONDARY_ENABLED` | Whether secondary schedule is enabled | `true` |
+| `LA_TERENURI_SQUASH_SECONDARY_APPOINTMENT_TIME` | Desired appointment time for secondary schedule | `10:00` |
+
+Similar environment variables exist for table tennis at La Terenuri and all sports at Gheorgheni.
 
 ## How It Works
 
-1. **Authentication**: The application first authenticates with the Calendis API using the provided credentials. The API returns a session token that is used for subsequent requests.
+The application works by interfacing with the Calendis API:
 
-2. **Getting Available Slots**: The application can retrieve available slots for a specific service, location, and date.
+1. **Authentication**: The app authenticates with Calendis using provided credentials to obtain a session token.
 
-3. **Booking Appointments**: The application can book appointments in a single operation using the available slots. This process includes:
-   - Creating the appointment
-   - Automatically retrieving the confirmation page
-   - Extracting the appointment ID using HTML parsing
-   - Confirming the appointment
+2. **Slot Availability**: It can check for available slots at specific facilities, locations, and dates.
 
-## HTML Parsing
+3. **Booking Process**: When booking an appointment, the app handles the entire flow in one operation - creating the appointment, retrieving the confirmation details, and finalizing the booking.
 
-The application uses Jsoup to parse the HTML response from the confirmation page. It extracts the appointment ID from the following HTML element:
-
-```html
-<input type="hidden" id="appointment_group_id" value="5656048"/>
-```
-
-This ID is then used to confirm the appointment.
+4. **Automated Scheduling**: The scheduler component can automatically book appointments at configured times, useful for securing popular slots as soon as they become available.
