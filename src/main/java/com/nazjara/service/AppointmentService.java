@@ -11,6 +11,7 @@ import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -29,6 +30,9 @@ public class AppointmentService {
   private final RestClient restClient;
   private final AuthService authService;
   private final BrowserHeadersHolder headersHolder;
+
+  @Value("${calendis.appointment.delete.only-me}")
+  private int deleteOnlyMe;
 
   /**
    * Books an appointment by creating it and then confirming it in a single operation. This method
@@ -87,6 +91,30 @@ public class AppointmentService {
         response.getAvailableSlots() != null ? response.getAvailableSlots().size() : 0);
 
     return response;
+  }
+
+  /**
+   * Deletes an appointment for a given user via Calendis API.
+   *
+   * @param appointmentId the appointment ID to delete
+   * @param userId        the end user ID on whose behalf the deletion is performed
+   */
+  public void deleteAppointment(long appointmentId, long userId) {
+    var uri = UriComponentsBuilder.fromPath(CREATE_APPOINTMENT_PATH + appointmentId)
+        .queryParam("only_me", deleteOnlyMe)
+        .queryParam("end_user_id", userId)
+        .build()
+        .toUriString();
+
+    restClient.delete()
+        .uri(uri)
+        .headers(
+            httpHeaders -> headersHolder.withCookie(buildCookieHeader()).forEach(httpHeaders::add))
+        .retrieve()
+        .toBodilessEntity();
+
+    log.info("Appointment {} deletion requested for user_id={} (only_me={})", appointmentId,
+        userId, deleteOnlyMe);
   }
 
   private AppointmentDto createAppointment(CreateAppointmentRequest request) {

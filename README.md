@@ -9,6 +9,7 @@ Calendis Bookings is designed to simplify the process of booking sports faciliti
 - Authentication with Calendis API
 - Checking available slots for sports facilities
 - Booking appointments in a single step
+- Canceling appointments
 - Automated scheduling of bookings at configured times
 
 ## Building and Running
@@ -34,12 +35,6 @@ Or with a specific profile:
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-### Run Tests
-
-```bash
-mvn test
 ```
 
 ## Configuration
@@ -146,4 +141,6 @@ The application works by interfacing with the Calendis API:
 
 3. **Booking Process**: When booking an appointment, the app handles the entire flow in one operation - creating the appointment, retrieving the confirmation details, and finalizing the booking.
 
-4. **Automated Scheduling**: The scheduler component can automatically book appointments at configured times, useful for securing popular slots as soon as they become available.
+4. **Canceling Appointments**: Users can cancel existing appointments by providing the appointment and user IDs.
+
+5. **Automated Scheduling**: The scheduler component can automatically book appointments at configured times, useful for securing popular slots as soon as they become available.
