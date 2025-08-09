@@ -24,7 +24,7 @@ public class AppointmentScheduler {
 
   private static final String ROMANIA_TIMEZONE = "Europe/Bucharest";
   private static final String UTC_TIMEZONE = "UTC";
-  private static final int BOOKING_ATTEMPTS_THRESHOLD = 3;
+  private static final int BOOKING_ATTEMPTS_THRESHOLD = 5;
 
   private final AuthService authService;
   private final AppointmentService appointmentService;
@@ -224,8 +224,21 @@ public class AppointmentScheduler {
     } catch (Exception e) {
       log.error("Error during scheduled appointment booking. Attempting a retry...", e);
 
+      if (e.getMessage() != null && e.getMessage().contains("once_per_week")) {
+        log.info("Appointment already booked. Stopping further attempts.");
+        return;
+      }
+
       if (attempt >= BOOKING_ATTEMPTS_THRESHOLD) {
         log.warn("Maximum booking attempts reached. Stopping further attempts.");
+        return;
+      }
+
+      try {
+        Thread.sleep(attempt * 1000L);
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+        log.info("Job interrupted, stopping gracefully.");
         return;
       }
 
