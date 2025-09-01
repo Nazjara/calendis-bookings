@@ -37,7 +37,7 @@ public class AppointmentController {
   public ResponseEntity<AvailableSlotsResponse> getAvailableSlots(
       @RequestParam("service_id") int serviceId,
       @RequestParam("location_id") int locationId,
-      @RequestParam(value = "stuff_id", required = false) int stuffId,
+      @RequestParam(value = "stuff_id", required = false) Integer stuffId,
       @RequestParam("date") long date,
       @RequestParam(value = "day_only", defaultValue = "1") int dayOnly) {
 
